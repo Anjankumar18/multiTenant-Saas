@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+
+  users    User[]
+  projects Project[]
+  usage    Usage[]
+  subscription  Subscription?
+  invoices      Invoice[]
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Usage {
+  id        String   @id @default(uuid())
+  tenantId  String
+  action    String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  @@unique([tenantId, action])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  action    String
+  createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  tenantId  String   @unique
+  plan      Plan
+  status    String   // ACTIVE, CANCELED
+  startDate DateTime
+  endDate   DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model Invoice {
+  id        String   @id @default(uuid())
+  tenantId  String
+  amount    Int      // in rupees
+  currency  String   @default("INR")
+  period    String   // e.g. 2026-01
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
