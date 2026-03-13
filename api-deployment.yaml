@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saas-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: saas-api
+  template:
+    metadata:
+      labels:
+        app: saas-api
+    spec:
+      containers:
+      - name: api
+        image: anjank18/saas-api:1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: postgresql://postgres:postgres@postgres:5432/saas
+        - name: REDIS_HOST
+          value: redis
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
